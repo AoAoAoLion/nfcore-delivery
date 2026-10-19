@@ -1,0 +1,6 @@
+results/
+report/
+qc_flags.csv
+__pycache__/
+*.pyc
+.pytest_cache/
