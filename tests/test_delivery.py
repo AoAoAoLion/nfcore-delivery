@@ -80,14 +80,19 @@ def test_samplesheet_truncated_file(tmp_path):
 def test_qc_gate_flags_low_alignment(tmp_path):
     mq = tmp_path / "results" / "multiqc" / "multiqc_data"
     mq.mkdir(parents=True)
+    # real MultiQC layout: module -> sample -> that tool's own metric keys
     (mq / "multiqc_general_stats.json").write_text(json.dumps({
-        "STAR_mqc-generalstats-star": {
-            "good_sample": {"percent_aligned": 92.5, "total_reads": 30e6},
-            "bad_sample": {"percent_aligned": 31.0, "total_reads": 30e6},
+        "star": {
+            "good_sample": {"uniquely_mapped_percent": 92.5, "total_reads": 30e6},
+            "bad_sample": {"uniquely_mapped_percent": 31.0, "total_reads": 30e6},
         },
-        "FastQC_mqc-generalstats-fastqc": {
-            "good_sample": {"percent_duplicates": 22.0},
-            "bad_sample": {"percent_duplicates": 88.0},
+        "picard": {
+            "good_sample": {"PERCENT_DUPLICATION": 0.22},
+            "bad_sample": {"PERCENT_DUPLICATION": 0.88},
+        },
+        "custom_content": {
+            "good_sample": {"percent_rRNA": 2.0},
+            "bad_sample": {"percent_rRNA": 40.0},
         },
     }))
     table = tmp_path / "qc_flags.csv"
@@ -103,8 +108,9 @@ def test_qc_gate_passes_clean_run(tmp_path):
     mq = tmp_path / "results" / "multiqc" / "multiqc_data"
     mq.mkdir(parents=True)
     (mq / "multiqc_general_stats.json").write_text(json.dumps({
-        "STAR_mqc-generalstats-star": {"s1": {"percent_aligned": 95.0, "total_reads": 40e6}},
-        "FastQC_mqc-generalstats-fastqc": {"s1": {"percent_duplicates": 15.0}},
+        "star": {"s1": {"uniquely_mapped_percent": 95.0, "total_reads": 40e6}},
+        "picard": {"s1": {"PERCENT_DUPLICATION": 0.15}},
+        "custom_content": {"s1": {"percent_rRNA": 1.0}},
     }))
     table = tmp_path / "qc_flags.csv"
     proc = run([str(REPO / "scripts" / "qc_gate.py"), "--results", str(tmp_path / "results"),
@@ -137,7 +143,9 @@ def nfcore_like(tmp_path):
     mq = tmp_path / "results" / "multiqc" / "multiqc_data"
     mq.mkdir(parents=True)
     (mq / "multiqc_general_stats.json").write_text(json.dumps({
-        "STAR_mqc-generalstats-star": {s: {"percent_aligned": 93.0, "total_reads": 25e6} for s in samples},
+        "star": {s: {"uniquely_mapped_percent": 93.0, "total_reads": 25e6} for s in samples},
+        "picard": {s: {"PERCENT_DUPLICATION": 0.2} for s in samples},
+        "custom_content": {s: {"percent_rRNA": 2.0} for s in samples},
     }))
     return tmp_path
 
